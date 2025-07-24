@@ -88,7 +88,7 @@
       if (Math.abs(num) >= 1000000) {
         const millions = Math.floor(num / 1000000);
         const thousands = Math.floor((num % 1000000) / 1000);
-        return millions + "м " + thousands + "тис";
+        return millions + "м " + thousands + "т";
       } else {
         return num.toLocaleString('uk-UA');
       }
