@@ -86,20 +86,34 @@
       const interval = setInterval(() => {
         current += stepValue;
         count++;
-        display.innerText = Math.round(current).toLocaleString('uk-UA');
+        display.innerText = formatNumber(Math.round(current));
 
         if (count >= steps) {
           clearInterval(interval);
-          display.innerText = end.toLocaleString('uk-UA');
+          display.innerText = formatNumber(end);
         }
       }, duration / steps);
     }
 
+    // Функція форматування чисел:
+    // Якщо число >= 1 000 000, відобразити у форматі: "Xм Yтис"
+    // Наприклад, 1232232 -> "1м 232тис"
+    function formatNumber(num) {
+      if (Math.abs(num) >= 1000000) {
+        const millions = Math.floor(num / 1000000);
+        const thousands = Math.floor((num % 1000000) / 1000);
+        return millions + "м " + thousands + "тис";
+      } else {
+        return num.toLocaleString('uk-UA');
+      }
+    }
+
+    // Анімація підморгування при зміні числа
     function flash(className) {
       display.classList.add(className);
       setTimeout(() => {
         display.classList.remove(className);
-      }, 600); // тривалість "підморгування"
+      }, 600); // тривалість підморгування
     }
   </script>
 </body>
