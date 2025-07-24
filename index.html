@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Анімоване число</title>
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500&display=swap" rel="stylesheet">
+  <style>
+    html, body {
+      background: transparent;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      font-size: 5em;
+      font-family: 'Rubik', sans-serif;
+      user-select: none;
+    }
+
+    #number {
+      padding: 0.2em 0.5em;
+      border-radius: 0.3em;
+      transition: box-shadow 0.3s ease;
+    }
+
+    .increase {
+      box-shadow: 0 0 30px 5px red;
+    }
+
+    .decrease {
+      box-shadow: 0 0 30px 5px limegreen;
+    }
+  </style>
+</head>
+<body>
+  <div id="number">Завантаження...</div>
+
+  <script type="text/javascript">
+    google.charts.load('current', {packages: ['corechart']});
+    google.charts.setOnLoadCallback(init);
+
+    let currentValue = 0;
+    const display = document.getElementById('number');
+
+    function init() {
+      fetchData();
+      setInterval(fetchData, 15000); // кожні 15 секунд
+    }
+
+    function fetchData() {
+      const query = new google.visualization.Query(
+        'https://docs.google.com/spreadsheets/d/17phnEn-NW-OnrZg4DcW65r-Xoq6ScsdVjS5yL0SS3fk/gviz/tq?sheet=WOT&range=C14'
+      );
+      query.send(handleQueryResponse);
+    }
+
+    function handleQueryResponse(response) {
+      if (response.isError()) {
+        display.innerText = 'Помилка: ' + response.getMessage();
+        return;
+      }
+
+      const data = response.getDataTable();
+      const newValue = data.getValue(0, 0);
+
+      if (newValue > currentValue) {
+        flash('increase');
+      } else if (newValue < currentValue) {
+        flash('decrease');
+      }
+
+      animateNumberChange(currentValue, newValue, 15000);
+      currentValue = newValue;
+    }
+
+    function animateNumberChange(start, end, duration) {
+      const steps = Math.min(Math.abs(end - start), 150);
+      if (steps === 0) return;
+
+      const stepValue = (end - start) / steps;
+      let current = start;
+      let count = 0;
+
+      const interval = setInterval(() => {
+        current += stepValue;
+        count++;
+        display.innerText = Math.round(current).toLocaleString('uk-UA');
+
+        if (count >= steps) {
+          clearInterval(interval);
+          display.innerText = end.toLocaleString('uk-UA');
+        }
+      }, duration / steps);
+    }
+
+    function flash(className) {
+      display.classList.add(className);
+      setTimeout(() => {
+        display.classList.remove(className);
+      }, 600); // тривалість "підморгування"
+    }
+  </script>
+</body>
+</html>
