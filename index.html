@@ -22,20 +22,12 @@
     #number {
       padding: 0.2em 0.5em;
       border-radius: 0.3em;
-      transition: box-shadow 0.3s ease;
-    }
-
-    .increase {
-      box-shadow: 0 0 30px 5px red;
-    }
-
-    .decrease {
-      box-shadow: 0 0 30px 5px limegreen;
+      transition: none; /* прибрано підсвітку */
     }
   </style>
 </head>
 <body>
-  <div id="number">Завантаження...</div>
+  <div id="number"></div>
 
   <script type="text/javascript">
     google.charts.load('current', {packages: ['corechart']});
@@ -58,18 +50,12 @@
 
     function handleQueryResponse(response) {
       if (response.isError()) {
-        display.innerText = 'Помилка: ' + response.getMessage();
+        display.innerText = ''; // без помилок на екрані
         return;
       }
 
       const data = response.getDataTable();
       const newValue = data.getValue(0, 0);
-
-      if (newValue > currentValue) {
-        flash('increase');
-      } else if (newValue < currentValue) {
-        flash('decrease');
-      }
 
       animateNumberChange(currentValue, newValue, 15000);
       currentValue = newValue;
@@ -77,7 +63,10 @@
 
     function animateNumberChange(start, end, duration) {
       const steps = Math.min(Math.abs(end - start), 150);
-      if (steps === 0) return;
+      if (steps === 0) {
+        display.innerText = formatNumber(end);
+        return;
+      }
 
       const stepValue = (end - start) / steps;
       let current = start;
@@ -95,9 +84,6 @@
       }, duration / steps);
     }
 
-    // Функція форматування чисел:
-    // Якщо число >= 1 000 000, відобразити у форматі: "Xм Yтис"
-    // Наприклад, 1232232 -> "1м 232тис"
     function formatNumber(num) {
       if (Math.abs(num) >= 1000000) {
         const millions = Math.floor(num / 1000000);
@@ -106,14 +92,6 @@
       } else {
         return num.toLocaleString('uk-UA');
       }
-    }
-
-    // Анімація підморгування при зміні числа
-    function flash(className) {
-      display.classList.add(className);
-      setTimeout(() => {
-        display.classList.remove(className);
-      }, 600); // тривалість підморгування
     }
   </script>
 </body>
