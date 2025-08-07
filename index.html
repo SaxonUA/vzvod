@@ -23,7 +23,7 @@
       padding: 0.2em 0.5em;
       border-radius: 0.3em;
       text-shadow: 0 0 20px rgba(255, 255, 255, 0.6);
-      transition: color 0.5s ease, transform 0.3s ease;
+      transition: all 0.5s ease;
       color: white;
     }
 
@@ -33,15 +33,31 @@
     }
 
     @keyframes pulseScale {
-      0% {
-        transform: scale(1);
-      }
-      50% {
-        transform: scale(1.15);
-      }
-      100% {
-        transform: scale(1);
-      }
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.15); }
+      100% { transform: scale(1); }
+    }
+
+    /* Градієнт біло-червоний */
+    .increase {
+      background: linear-gradient(90deg, white, red);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Градієнт зелено-білий */
+    .decrease {
+      background: linear-gradient(90deg, green, white);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Білий колір після завершення */
+    .stable {
+      background: none;
+      -webkit-background-clip: initial;
+      -webkit-text-fill-color: white;
+      color: white;
     }
   </style>
 </head>
@@ -84,14 +100,17 @@
       const steps = Math.min(Math.abs(end - start), 150);
       if (steps === 0) {
         display.innerText = formatNumber(end);
-        display.style.color = 'white';
+        resetColor();
         return;
       }
 
-      // Колір у зворотному порядку: зменшення — зелений, збільшення — червоний
-      display.style.color = end > start ? 'red' : 'green';
+      // Визначаємо напрямок і встановлюємо відповідний клас
+      if (end > start) {
+        setGradient('increase'); // зростання → біло-червоний
+      } else {
+        setGradient('decrease'); // зменшення → зелено-білий
+      }
 
-      // Додаємо клас пульсації
       display.classList.add('pulse');
 
       const stepValue = (end - start) / steps;
@@ -106,14 +125,23 @@
         if (count >= steps) {
           clearInterval(interval);
           display.innerText = formatNumber(end);
-
-          // Після завершення — повертаємо білий
-          display.style.color = 'white';
-
-          // Видаляємо клас пульсації після завершення
-          display.classList.remove('pulse');
+          resetColor(); // повернення до білого
         }
       }, duration / steps);
+    }
+
+    function setGradient(type) {
+      display.classList.remove('increase', 'decrease', 'stable');
+      if (type === 'increase') {
+        display.classList.add('increase');
+      } else if (type === 'decrease') {
+        display.classList.add('decrease');
+      }
+    }
+
+    function resetColor() {
+      display.classList.remove('increase', 'decrease', 'pulse');
+      display.classList.add('stable');
     }
 
     function formatNumber(num) {
