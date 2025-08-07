@@ -96,26 +96,29 @@
       currentValue = newValue;
     }
 
-    function animateNumberChange(start, end, duration) {
-      const steps = Math.min(Math.abs(end - start), 150);
-      if (steps === 0) {
+    function animateNumberChange(start, end, maxDuration) {
+      const absChange = Math.abs(end - start);
+      if (absChange === 0) {
         display.innerText = formatNumber(end);
         resetColor();
         return;
       }
 
-      // Визначаємо напрямок і встановлюємо відповідний клас
-      if (end > start) {
-        setGradient('increase'); // зростання → біло-червоний
-      } else {
-        setGradient('decrease'); // зменшення → зелено-білий
-      }
-
-      display.classList.add('pulse');
+      // Адаптивна тривалість: менше зміна → швидше
+      const duration = Math.max(800, Math.min(maxDuration, absChange * 80)); // 80 мс на одиницю
+      const steps = Math.min(absChange, 50); // максимум 50 кроків
 
       const stepValue = (end - start) / steps;
       let current = start;
       let count = 0;
+
+      // Колір та ефект
+      if (end > start) {
+        setGradient('increase'); // біло-червоний
+      } else {
+        setGradient('decrease'); // зелено-білий
+      }
+      display.classList.add('pulse');
 
       const interval = setInterval(() => {
         current += stepValue;
