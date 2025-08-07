@@ -66,7 +66,7 @@
 
     let currentValue = 0;
     const display = document.getElementById('number');
-    let animationInterval = null; // 🔁 Контроль анімації
+    let animationInterval = null;
 
     function init() {
       fetchData();
@@ -95,13 +95,11 @@
         return;
       }
 
-      // Зупинити поточну анімацію, якщо вона йде
       if (animationInterval !== null) {
         clearInterval(animationInterval);
         animationInterval = null;
       }
 
-      // Поточне число беремо з екрана
       const currentDisplayed = parseDisplayedNumber(display.innerText);
       animateNumberChange(currentDisplayed, newValue);
       currentValue = newValue;
@@ -117,8 +115,11 @@
 
       const direction = diff > 0 ? 1 : -1;
       const absDiff = Math.abs(diff);
-      const totalDuration = 1000; // 5 сек
-      const intervalTime = totalDuration / absDiff;
+      const totalDuration = 5000; // 5 секунд
+      const maxSteps = 100;
+      const stepCount = Math.min(absDiff, maxSteps);
+      const stepSize = Math.ceil(absDiff / stepCount);
+      const intervalTime = totalDuration / stepCount;
 
       setGradient(direction > 0 ? 'increase' : 'decrease');
       display.classList.add('pulse');
@@ -126,7 +127,13 @@
       let current = start;
 
       animationInterval = setInterval(() => {
-        current += direction;
+        current += direction * stepSize;
+
+        // Не переходити межі
+        if ((direction > 0 && current >= end) || (direction < 0 && current <= end)) {
+          current = end;
+        }
+
         display.innerText = formatNumber(current);
 
         if (current === end) {
@@ -162,7 +169,6 @@
     }
 
     function parseDisplayedNumber(text) {
-      // Обробляє формати типу "1м 500т" або "15 000"
       if (text.includes('м')) {
         const parts = text.split('м');
         const millions = parseInt(parts[0].trim()) || 0;
