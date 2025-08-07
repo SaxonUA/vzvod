@@ -7,7 +7,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500&display=swap" rel="stylesheet">
   <style>
     html, body {
-      background: transparent;
+      background: black;
       color: white;
       display: flex;
       justify-content: center;
@@ -66,10 +66,11 @@
 
     let currentValue = 0;
     const display = document.getElementById('number');
+    let animationInterval = null; // 🔁 Контроль анімації
 
     function init() {
       fetchData();
-      setInterval(fetchData, 15000); // кожні 15 секунд
+      setInterval(fetchData, 5000); // кожні 5 секунд
     }
 
     function fetchData() {
@@ -86,9 +87,23 @@
       }
 
       const data = response.getDataTable();
-      const newValue = data.getValue(0, 0);
+      const value = data.getValue(0, 0);
+      const newValue = Number(value);
 
-      animateNumberChange(currentValue, newValue);
+      if (isNaN(newValue)) {
+        console.warn('Недійсне число:', value);
+        return;
+      }
+
+      // Зупинити поточну анімацію, якщо вона йде
+      if (animationInterval !== null) {
+        clearInterval(animationInterval);
+        animationInterval = null;
+      }
+
+      // Поточне число беремо з екрана
+      const currentDisplayed = parseDisplayedNumber(display.innerText);
+      animateNumberChange(currentDisplayed, newValue);
       currentValue = newValue;
     }
 
@@ -102,25 +117,22 @@
 
       const direction = diff > 0 ? 1 : -1;
       const absDiff = Math.abs(diff);
-
-      const intervalTime = Math.max(10, 1000 / absDiff); // адаптивна швидкість
+      const totalDuration = 1000; // 5 сек
+      const intervalTime = totalDuration / absDiff;
 
       setGradient(direction > 0 ? 'increase' : 'decrease');
       display.classList.add('pulse');
 
       let current = start;
 
-      const interval = setInterval(() => {
+      animationInterval = setInterval(() => {
         current += direction;
         display.innerText = formatNumber(current);
 
         if (current === end) {
-          clearInterval(interval);
-
-          // 🕒 Невелика затримка перед поверненням до білого
-          setTimeout(() => {
-            resetColor();
-          }, 300); // 300 мс затримка
+          clearInterval(animationInterval);
+          animationInterval = null;
+          setTimeout(() => resetColor(), 300);
         }
       }, intervalTime);
     }
@@ -146,6 +158,18 @@
         return millions + "м " + thousands + "т";
       } else {
         return num.toLocaleString('uk-UA');
+      }
+    }
+
+    function parseDisplayedNumber(text) {
+      // Обробляє формати типу "1м 500т" або "15 000"
+      if (text.includes('м')) {
+        const parts = text.split('м');
+        const millions = parseInt(parts[0].trim()) || 0;
+        const thousands = parseInt(parts[1].replace(/[^\d]/g, '')) || 0;
+        return millions * 1000000 + thousands * 1000;
+      } else {
+        return parseInt(text.replace(/[^\d]/g, '')) || 0;
       }
     }
   </script>
