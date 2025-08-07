@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="uk">
 <head>
   <meta charset="UTF-8">
   <title>Анімоване число</title>
@@ -22,15 +22,34 @@
     #number {
       padding: 0.2em 0.5em;
       border-radius: 0.3em;
-      transition: none; /* прибрано підсвітку */
+      text-shadow: 0 0 20px rgba(255, 255, 255, 0.6);
+      transition: color 0.5s ease, transform 0.3s ease;
+      color: white;
+    }
+
+    /* Пульсація при зміні */
+    .pulse {
+      animation: pulseScale 0.6s ease;
+    }
+
+    @keyframes pulseScale {
+      0% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.15);
+      }
+      100% {
+        transform: scale(1);
+      }
     }
   </style>
 </head>
 <body>
-  <div id="number"></div>
+  <div id="number">0</div>
 
   <script type="text/javascript">
-    google.charts.load('current', {packages: ['corechart']});
+    google.charts.load('current', { packages: ['corechart'] });
     google.charts.setOnLoadCallback(init);
 
     let currentValue = 0;
@@ -50,7 +69,7 @@
 
     function handleQueryResponse(response) {
       if (response.isError()) {
-        display.innerText = ''; // без помилок на екрані
+        display.innerText = '';
         return;
       }
 
@@ -65,8 +84,15 @@
       const steps = Math.min(Math.abs(end - start), 150);
       if (steps === 0) {
         display.innerText = formatNumber(end);
+        display.style.color = 'white';
         return;
       }
+
+      // Колір у зворотному порядку: зменшення — зелений, збільшення — червоний
+      display.style.color = end > start ? 'red' : 'green';
+
+      // Додаємо клас пульсації
+      display.classList.add('pulse');
 
       const stepValue = (end - start) / steps;
       let current = start;
@@ -80,6 +106,12 @@
         if (count >= steps) {
           clearInterval(interval);
           display.innerText = formatNumber(end);
+
+          // Після завершення — повертаємо білий
+          display.style.color = 'white';
+
+          // Видаляємо клас пульсації після завершення
+          display.classList.remove('pulse');
         }
       }, duration / steps);
     }
