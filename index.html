@@ -27,7 +27,6 @@
       color: white;
     }
 
-    /* Пульсація при зміні */
     .pulse {
       animation: pulseScale 0.6s ease;
     }
@@ -38,21 +37,18 @@
       100% { transform: scale(1); }
     }
 
-    /* Градієнт біло-червоний */
     .increase {
-      background: linear-gradient(90deg, white, red);
+      background: linear-gradient(45deg, white, red, white);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
-    /* Градієнт зелено-білий */
     .decrease {
-      background: linear-gradient(90deg, green, white);
+      background: linear-gradient(45deg, green, white, green);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
-    /* Білий колір після завершення */
     .stable {
       background: none;
       -webkit-background-clip: initial;
@@ -92,45 +88,41 @@
       const data = response.getDataTable();
       const newValue = data.getValue(0, 0);
 
-      animateNumberChange(currentValue, newValue, 15000);
+      animateNumberChange(currentValue, newValue);
       currentValue = newValue;
     }
 
-    function animateNumberChange(start, end, maxDuration) {
-      const absChange = Math.abs(end - start);
-      if (absChange === 0) {
+    function animateNumberChange(start, end) {
+      const diff = end - start;
+      if (diff === 0) {
         display.innerText = formatNumber(end);
         resetColor();
         return;
       }
 
-      // Адаптивна тривалість: менше зміна → швидше
-      const duration = Math.max(800, Math.min(maxDuration, absChange * 80)); // 80 мс на одиницю
-      const steps = Math.min(absChange, 50); // максимум 50 кроків
+      const direction = diff > 0 ? 1 : -1;
+      const absDiff = Math.abs(diff);
 
-      const stepValue = (end - start) / steps;
-      let current = start;
-      let count = 0;
+      const intervalTime = Math.max(10, 1000 / absDiff); // адаптивна швидкість
 
-      // Колір та ефект
-      if (end > start) {
-        setGradient('increase'); // біло-червоний
-      } else {
-        setGradient('decrease'); // зелено-білий
-      }
+      setGradient(direction > 0 ? 'increase' : 'decrease');
       display.classList.add('pulse');
 
-      const interval = setInterval(() => {
-        current += stepValue;
-        count++;
-        display.innerText = formatNumber(Math.round(current));
+      let current = start;
 
-        if (count >= steps) {
+      const interval = setInterval(() => {
+        current += direction;
+        display.innerText = formatNumber(current);
+
+        if (current === end) {
           clearInterval(interval);
-          display.innerText = formatNumber(end);
-          resetColor(); // повернення до білого
+
+          // 🕒 Невелика затримка перед поверненням до білого
+          setTimeout(() => {
+            resetColor();
+          }, 300); // 300 мс затримка
         }
-      }, duration / steps);
+      }, intervalTime);
     }
 
     function setGradient(type) {
