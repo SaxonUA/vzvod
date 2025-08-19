@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Анімоване число</title>
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500&display=swap" rel="stylesheet" />
   <style>
     html, body {
-      background: transperent;
+      background: black; /* фікс */
       color: white;
       display: flex;
       justify-content: center;
@@ -58,13 +58,13 @@
   </style>
 </head>
 <body>
-  <div id="number">0</div>
+  <div id="number" class="stable">0</div>
 
   <script type="text/javascript">
     google.charts.load('current', { packages: ['corechart'] });
     google.charts.setOnLoadCallback(init);
 
-    let currentValue = 0;
+    let lastValue = null;
     const display = document.getElementById('number');
     let animationInterval = null;
 
@@ -82,39 +82,54 @@
 
     function handleQueryResponse(response) {
       if (response.isError()) {
-        display.innerText = '';
+        console.warn('Помилка запиту:', response.getMessage());
         return;
       }
 
       const data = response.getDataTable();
-      const value = data.getValue(0, 0);
-      const newValue = Number(value);
+      const raw = data.getValue(0, 0);
+      let value = Number(raw);
 
-      if (isNaN(newValue)) {
-        console.warn('Недійсне число:', value);
+      if (Number.isNaN(value)) {
+        console.warn('Недійсне число:', raw);
         return;
       }
+
+      value = Math.round(value); // <-- округлення до цілого
 
       if (animationInterval !== null) {
         clearInterval(animationInterval);
         animationInterval = null;
       }
 
-      const currentDisplayed = parseDisplayedNumber(display.innerText);
-      animateNumberChange(currentDisplayed, newValue);
-      currentValue = newValue;
+      if (lastValue === null) {
+        display.textContent = formatNumber(value);
+        display.classList.add('stable');
+        lastValue = value;
+        return;
+      }
+
+      if (value === lastValue) {
+        display.textContent = formatNumber(value);
+        resetColor();
+        return;
+      }
+
+      animateNumberChange(lastValue, value);
+      lastValue = value;
     }
 
     function animateNumberChange(start, end) {
       const diff = end - start;
       if (diff === 0) {
-        display.innerText = formatNumber(end);
+        display.textContent = formatNumber(end);
         resetColor();
         return;
       }
 
       const direction = diff > 0 ? 1 : -1;
       const absDiff = Math.abs(diff);
+
       const totalDuration = 5000; // 5 секунд
       const maxSteps = 100;
       const stepCount = Math.min(absDiff, maxSteps);
@@ -122,6 +137,8 @@
       const intervalTime = totalDuration / stepCount;
 
       setGradient(direction > 0 ? 'increase' : 'decrease');
+      display.classList.remove('pulse');
+      void display.offsetWidth; // форсуємо reflow
       display.classList.add('pulse');
 
       let current = start;
@@ -129,12 +146,11 @@
       animationInterval = setInterval(() => {
         current += direction * stepSize;
 
-        // Не переходити межі
         if ((direction > 0 && current >= end) || (direction < 0 && current <= end)) {
           current = end;
         }
 
-        display.innerText = formatNumber(current);
+        display.textContent = formatNumber(current);
 
         if (current === end) {
           clearInterval(animationInterval);
@@ -146,11 +162,8 @@
 
     function setGradient(type) {
       display.classList.remove('increase', 'decrease', 'stable');
-      if (type === 'increase') {
-        display.classList.add('increase');
-      } else if (type === 'decrease') {
-        display.classList.add('decrease');
-      }
+      if (type === 'increase') display.classList.add('increase');
+      else if (type === 'decrease') display.classList.add('decrease');
     }
 
     function resetColor() {
@@ -159,24 +172,13 @@
     }
 
     function formatNumber(num) {
-      if (Math.abs(num) >= 1000000) {
-        const millions = Math.floor(num / 1000000);
-        const thousands = Math.floor((num % 1000000) / 1000);
-        return millions + "м " + thousands + "т";
-      } else {
-        return num.toLocaleString('uk-UA');
+      const abs = Math.abs(num);
+      if (abs >= 1_000_000) {
+        const millions = Math.floor(num / 1_000_000);
+        const thousands = Math.floor((Math.abs(num) % 1_000_000) / 1_000) * Math.sign(num);
+        return `${millions}м ${Math.abs(thousands)}т`;
       }
-    }
-
-    function parseDisplayedNumber(text) {
-      if (text.includes('м')) {
-        const parts = text.split('м');
-        const millions = parseInt(parts[0].trim()) || 0;
-        const thousands = parseInt(parts[1].replace(/[^\d]/g, '')) || 0;
-        return millions * 1000000 + thousands * 1000;
-      } else {
-        return parseInt(text.replace(/[^\d]/g, '')) || 0;
-      }
+      return num.toLocaleString('uk-UA');
     }
   </script>
 </body>
